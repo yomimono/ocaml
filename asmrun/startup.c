@@ -125,10 +125,26 @@ value caml_startup_exn(char **argv)
   caml_init_gc (caml_init_minor_heap_wsz, caml_init_heap_wsz,
                 caml_init_heap_chunk_sz, caml_init_percent_free,
                 caml_init_max_percent_free, caml_init_major_window);
+#ifdef DEBUG
+  caml_gc_message (-1, "GC init complete.  Initializing static structures\n", 0);
+#endif
+
   init_static();
+#ifdef DEBUG
+  caml_gc_message (-1, "init_static complete.  next is caml_init_signals\n", 0);
+#endif
   caml_init_signals();
+#ifdef DEBUG
+  caml_gc_message (-1, "init_signals complete. next is caml_init_backtrace\n", 0);
+#endif
   caml_init_backtrace();
+#ifdef DEBUG
+  caml_gc_message (-1, "caml_init_backtrace complete. next is caml_debugger_init\n", 0);
+#endif
   caml_debugger_init (); /* force debugger.o stub to be linked */
+#ifdef DEBUG
+  caml_gc_message (-1, "caml_debugger_init complete. About to do some exe_name stuff\n", 0);
+#endif
   exe_name = argv[0];
   if (exe_name == NULL) exe_name = "";
   proc_self_exe = caml_executable_name();
@@ -136,11 +152,17 @@ value caml_startup_exn(char **argv)
     exe_name = proc_self_exe;
   else
     exe_name = caml_search_exe_in_path(exe_name);
+#ifdef DEBUG
+  caml_gc_message (-1, "about to call caml_sys_init\n", 0);
+#endif
   caml_sys_init(exe_name, argv);
   if (sigsetjmp(caml_termination_jmpbuf.buf, 0)) {
     if (caml_termination_hook != NULL) caml_termination_hook(NULL);
     return Val_unit;
   }
+#ifdef DEBUG
+  caml_gc_message (-1, "sigsetjmp done. about to call caml_start_program\n", 0);
+#endif
   return caml_start_program();
 }
 
